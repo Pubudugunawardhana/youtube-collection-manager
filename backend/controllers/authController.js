@@ -64,19 +64,24 @@ const forgotPassword = async (req, res) => {
        return res.status(404).json({ message: 'User not found' });
     }
     
-    const resetToken = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '15m' });
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    user.resetPasswordOtp = otp;
+    user.resetPasswordOtpExpires = Date.now() + 15 * 60 * 1000; // 15 mins
+    await user.save();
     
-    // Create reset URL (pointing to the frontend route you will build to reset the password)
-    // Note: ensure your frontend is running on localhost:3000
-    const resetUrl = `http://localhost:3000/reset-password?token=${resetToken}`;
-    
-    const message = `You are receiving this email because you (or someone else) requested the reset of a password. Please click on the link below to reset your password:\n\n${resetUrl}`;
+    const message = `You requested a password reset. Your 6-digit reset code is: ${otp}\nThis code is valid for 15 minutes.`;
     
     const html = `
-      <h3>Password Reset Request</h3>
-      <p>You are receiving this email because you (or someone else) requested the reset of a password.</p>
-      <p>Please click on the link below to reset your password:</p>
-      <a href="${resetUrl}" target="_blank">Reset Password</a>
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 10px;">
+        <h2 style="color: #9333ea; text-align: center; margin-bottom: 0;">FocusTube</h2>
+        <h3 style="color: #333; text-align: center; margin-top: 5px;">Password Reset Request</h3>
+        <p style="color: #555;">You are receiving this email because you (or someone else) requested a password reset for your account.</p>
+        <p style="color: #555;">Your 6-digit verification code is:</p>
+        <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px; text-align: center; margin: 20px 0;">
+          <h1 style="letter-spacing: 5px; color: #111; margin: 0;">${otp}</h1>
+        </div>
+        <p style="color: #777; font-size: 12px; text-align: center;">This code will expire in 15 minutes. If you did not request this, please ignore this email.</p>
+      </div>
     `;
 
     try {
@@ -100,23 +105,33 @@ const forgotPassword = async (req, res) => {
 
 const resetPassword = async (req, res) => {
   try {
-    const { token, newPassword } = req.body;
+    const { email, otp, newPassword } = req.body;
     
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id);
+    if (!email || !otp || !newPassword) {
+      return res.status(400).json({ message: 'Please provide email, OTP, and new password' });
+    }
+
+    const user = await User.findOne({ 
+      email, 
+      resetPasswordOtp: otp,
+      resetPasswordOtpExpires: { $gt: Date.now() }
+    });
     
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(400).json({ message: 'Invalid or expired OTP code' });
     }
 
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(newPassword, salt);
+    
+    user.resetPasswordOtp = undefined;
+    user.resetPasswordOtpExpires = undefined;
     await user.save();
 
     res.json({ message: 'Password has been reset successfully' });
   } catch (err) {
     console.error(err.message);
-    res.status(400).json({ message: 'Invalid or expired token' });
+    res.status(500).send('Server error');
   }
 }
 

@@ -19,6 +19,12 @@ const userSchema = new mongoose.Schema({
   profilePicture: {
     type: String, // Will store base64 Data URL
   },
+  resetPasswordOtp: {
+    type: String,
+  },
+  resetPasswordOtpExpires: {
+    type: Date,
+  },
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);

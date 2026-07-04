@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import api from '@/lib/axios';
 import { KeyRound, PlaySquare, ArrowLeft } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -11,6 +12,7 @@ export default function ForgotPassword() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,6 +23,9 @@ export default function ForgotPassword() {
     try {
       const res = await api.post('/auth/forgot-password', { email });
       setMessage(res.data.message);
+      setTimeout(() => {
+        router.push(`/reset-password?email=${encodeURIComponent(email)}`);
+      }, 1500);
     } catch (err) {
       interface ApiError {
         response?: {
