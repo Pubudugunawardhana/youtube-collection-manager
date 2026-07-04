@@ -85,6 +85,7 @@ export default function CollectionDetail({ params }: { params: Promise<{ id: str
   const [newVideoUrl, setNewVideoUrl] = useState('');
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState('');
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; type: 'collection' | 'video'; targetId?: string; title: string }>({ isOpen: false, type: 'collection', title: '' });
   const router = useRouter();
 
   const fetchVideos = useCallback(async () => {
@@ -160,23 +161,27 @@ export default function CollectionDetail({ params }: { params: Promise<{ id: str
     }
   };
 
-  const deleteVideo = async (videoId: string) => {
-    if (!confirm('Are you sure you want to remove this video?')) return;
-    try {
-      await api.delete(`/videos/${videoId}`);
-      fetchVideos();
-    } catch {
-      console.error('Failed to delete video');
-    }
+  const confirmDeleteVideo = (videoId: string) => {
+    setDeleteModal({ isOpen: true, type: 'video', targetId: videoId, title: 'Are you sure you want to remove this video?' });
   };
 
-  const deleteCollection = async () => {
-    if (!confirm('Are you sure you want to delete this entire collection?')) return;
+  const confirmDeleteCollection = () => {
+    setDeleteModal({ isOpen: true, type: 'collection', title: 'Are you sure you want to delete this entire collection?' });
+  };
+
+  const executeDelete = async () => {
     try {
-      await api.delete(`/collections/${id}`);
-      router.push('/dashboard');
+      if (deleteModal.type === 'video' && deleteModal.targetId) {
+        await api.delete(`/videos/${deleteModal.targetId}`);
+        fetchVideos();
+      } else if (deleteModal.type === 'collection') {
+        await api.delete(`/collections/${id}`);
+        router.push('/dashboard');
+        return;
+      }
+      setDeleteModal({ ...deleteModal, isOpen: false });
     } catch {
-      console.error('Failed to delete collection');
+      console.error('Failed to delete');
     }
   };
 
@@ -255,7 +260,7 @@ export default function CollectionDetail({ params }: { params: Promise<{ id: str
                 <Plus size={16} /> Add Video
               </button>
               <button 
-                onClick={deleteCollection} 
+                onClick={confirmDeleteCollection} 
                 className="bg-white dark:bg-zinc-900 border border-black/10 dark:border-white/10 text-red-500 hover:text-white hover:bg-red-500 hover:border-red-500 text-sm font-semibold rounded-xl px-5 py-3 transition-all flex items-center justify-center gap-2 shadow-sm flex-1 sm:flex-none"
                 title="Delete Collection"
               >
@@ -339,7 +344,7 @@ export default function CollectionDetail({ params }: { params: Promise<{ id: str
                     <StatusDropdown status={video.status} onChange={(val) => updateStatus(video._id, val)} />
                     
                     <button 
-                      onClick={() => deleteVideo(video._id)}
+                      onClick={() => confirmDeleteVideo(video._id)}
                       className="w-9 h-9 rounded-xl flex items-center justify-center text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 hover:border-red-200 dark:hover:border-red-500/30 border border-transparent transition-all"
                       title="Remove video"
                     >
@@ -413,6 +418,43 @@ export default function CollectionDetail({ params }: { params: Promise<{ id: str
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+          <div className="absolute inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm transition-opacity" onClick={() => setDeleteModal({ ...deleteModal, isOpen: false })}></div>
+          <div className="relative w-full max-w-md bg-white dark:bg-zinc-950 border border-black/10 dark:border-white/10 rounded-3xl p-8 shadow-2xl animate-in zoom-in-95 fade-in duration-200">
+            <button 
+              onClick={() => setDeleteModal({ ...deleteModal, isOpen: false })}
+              className="absolute top-6 right-6 w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors"
+            >
+              <X size={16} />
+            </button>
+            
+            <div className="w-12 h-12 rounded-2xl bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 flex items-center justify-center mb-5 border border-red-200 dark:border-red-500/20">
+              <Trash2 size={24} />
+            </div>
+            
+            <h2 className="text-xl font-bold text-zinc-900 dark:text-white mb-2">Confirm Deletion</h2>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-8">{deleteModal.title}</p>
+            
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setDeleteModal({ ...deleteModal, isOpen: false })} 
+                className="flex-1 bg-white dark:bg-zinc-900 border border-black/10 dark:border-white/10 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-sm font-semibold rounded-xl px-4 py-3 transition-colors shadow-sm"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={executeDelete}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-xl px-4 py-3 transition-all flex items-center justify-center shadow-md"
+              >
+                Delete
+              </button>
+            </div>
           </div>
         </div>
       )}
