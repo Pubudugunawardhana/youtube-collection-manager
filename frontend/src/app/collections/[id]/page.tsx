@@ -89,6 +89,7 @@ export default function CollectionDetail({ params }: { params: Promise<{ id: str
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState('');
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; type: 'collection' | 'video'; targetId?: string; title: string }>({ isOpen: false, type: 'collection', title: '' });
+  const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
   const router = useRouter();
 
   const fetchVideos = useCallback(async () => {
@@ -353,16 +354,14 @@ export default function CollectionDetail({ params }: { params: Promise<{ id: str
                     </div>
                   )}
                   
-                  <a 
-                    href={`https://youtube.com/watch?v=${video.youtubeId}`} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300"
+                  <button 
+                    onClick={() => setPlayingVideoId(video.youtubeId)}
+                    className="absolute inset-0 flex items-center justify-center w-full h-full opacity-0 group-hover:opacity-100 transition-all duration-300 z-10 cursor-pointer"
                   >
                     <div className="bg-emerald-600/90 backdrop-blur-md rounded-full p-4 shadow-2xl transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 hover:bg-emerald-500 hover:scale-110">
                       <PlayCircle size={28} className="text-white fill-white/20" />
                     </div>
-                  </a>
+                  </button>
                 </div>
                 
                 <div className="p-5 flex flex-col flex-1">
@@ -485,6 +484,34 @@ export default function CollectionDetail({ params }: { params: Promise<{ id: str
                 Delete
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Video Player Modal */}
+      {playingVideoId && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 lg:p-12 animate-in fade-in duration-300">
+          <div 
+            className="absolute inset-0 bg-black/90 backdrop-blur-md" 
+            onClick={() => setPlayingVideoId(null)}
+          ></div>
+          <div className="relative w-full max-w-6xl aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/10 zoom-in-95 animate-in duration-300">
+            <button 
+              onClick={() => setPlayingVideoId(null)}
+              className="absolute -top-12 right-0 sm:top-6 sm:right-6 w-10 h-10 rounded-full bg-black/50 hover:bg-black/80 flex items-center justify-center text-white/70 hover:text-white transition-colors z-10 backdrop-blur-sm"
+            >
+              <X size={24} />
+            </button>
+            <iframe
+              width="100%"
+              height="100%"
+              src={`https://www.youtube.com/embed/${playingVideoId}?autoplay=1`}
+              title="YouTube video player"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className="w-full h-full"
+            ></iframe>
           </div>
         </div>
       )}
