@@ -4,10 +4,11 @@ const Video = require('../models/Video');
 
 const createCollection = async (req, res) => {
   try {
-    const { name, icon } = req.body;
+    const { name, icon, category } = req.body;
     const collection = new Collection({
       name,
       icon: icon || 'Folder',
+      category: category || 'General',
       userId: req.user.id
     });
     await collection.save();

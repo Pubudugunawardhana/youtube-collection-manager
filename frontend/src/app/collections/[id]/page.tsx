@@ -4,9 +4,10 @@ import { useEffect, useState, use, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import api from '@/lib/axios';
-import { ArrowLeft, Plus, Trash2, Clock, Loader2, PlayCircle, CheckCircle2, PlaySquare, X, ChevronDown, Check } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Clock, Loader2, PlayCircle, CheckCircle2, PlaySquare, X, ChevronDown, Check, Heart } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { UserMenu } from '@/components/user-menu';
+import { IconRenderer } from '@/lib/icons';
 
 interface Video {
   _id: string;
@@ -21,6 +22,8 @@ interface Collection {
   _id: string;
   name: string;
   category?: string;
+  icon?: string;
+  isFavorite?: boolean;
 }
 
 const StatusDropdown = ({ status, onChange }: { status: string, onChange: (val: string) => void }) => {
@@ -161,6 +164,20 @@ export default function CollectionDetail({ params }: { params: Promise<{ id: str
     }
   };
 
+  const handleToggleFavorite = async () => {
+    if (!collection) return;
+    const newStatus = !collection.isFavorite;
+    
+    setCollection({ ...collection, isFavorite: newStatus });
+    
+    try {
+      await api.put(`/collections/${id}`, { isFavorite: newStatus });
+    } catch (err) {
+      console.error('Failed to toggle favorite', err);
+      setCollection({ ...collection, isFavorite: !newStatus });
+    }
+  };
+
   const confirmDeleteVideo = (videoId: string) => {
     setDeleteModal({ isOpen: true, type: 'video', targetId: videoId, title: 'Are you sure you want to remove this video?' });
   };
@@ -236,6 +253,11 @@ export default function CollectionDetail({ params }: { params: Promise<{ id: str
           <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
             <div>
               <div className="flex items-center gap-3 mb-3">
+                {collection?.icon && (
+                  <div className="w-10 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-black/5 dark:border-white/5 flex items-center justify-center">
+                    <IconRenderer iconName={collection.icon} size={20} className="text-zinc-600 dark:text-zinc-400" />
+                  </div>
+                )}
                 <h2 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white">{collection?.name || 'Collection'}</h2>
                 <span className="text-xs font-medium px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                   {collection?.category || 'General'}
@@ -253,6 +275,14 @@ export default function CollectionDetail({ params }: { params: Promise<{ id: str
             </div>
             
             <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto mt-2 md:mt-0">
+              <button 
+                onClick={handleToggleFavorite}
+                className={`flex items-center justify-center gap-2 text-sm font-semibold rounded-xl px-5 py-3 transition-all shadow-sm flex-1 sm:flex-none border ${collection?.isFavorite ? 'bg-rose-50 dark:bg-rose-500/10 text-rose-500 border-rose-200 dark:border-rose-500/30 hover:bg-rose-100 dark:hover:bg-rose-500/20' : 'bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border-black/10 dark:border-white/10 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:border-rose-200 dark:hover:border-rose-500/30'}`}
+                title={collection?.isFavorite ? "Remove from Favorites" : "Add to Favorites"}
+              >
+                <Heart size={16} className={collection?.isFavorite ? 'fill-current' : ''} />
+                <span className="sm:hidden md:inline">{collection?.isFavorite ? 'Favorited' : 'Favorite'}</span>
+              </button>
               <button 
                 onClick={() => setShowAddModal(true)} 
                 className="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-xl px-5 py-3 transition-all flex items-center justify-center gap-2 shadow-md flex-1 sm:flex-none"

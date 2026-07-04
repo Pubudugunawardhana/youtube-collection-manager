@@ -29,6 +29,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [newCollectionName, setNewCollectionName] = useState('');
+  const [newCollectionCategory, setNewCollectionCategory] = useState('');
   const [selectedIcon, setSelectedIcon] = useState('Folder');
   const router = useRouter();
 
@@ -73,9 +74,14 @@ export default function Dashboard() {
     if (!newCollectionName.trim()) return;
     
     try {
-      await api.post('/collections', { name: newCollectionName, icon: selectedIcon });
+      await api.post('/collections', { 
+        name: newCollectionName, 
+        icon: selectedIcon, 
+        category: newCollectionCategory.trim() || undefined 
+      });
       setShowModal(false);
       setNewCollectionName('');
+      setNewCollectionCategory('');
       setSelectedIcon('Folder');
       fetchCollections();
     } catch (err) {
@@ -274,7 +280,7 @@ export default function Dashboard() {
                   ))}
                 </div>
               </div>
-              <div className="space-y-1.5 mb-8">
+              <div className="space-y-1.5 mb-5">
                 <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 ml-1">Collection Name</label>
                 <input 
                   type="text" 
@@ -284,6 +290,16 @@ export default function Dashboard() {
                   placeholder="e.g. React Mastery, Finance 101"
                   autoFocus
                   required
+                />
+              </div>
+              <div className="space-y-1.5 mb-8">
+                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 ml-1">Category (Optional)</label>
+                <input 
+                  type="text" 
+                  className="w-full bg-zinc-50 dark:bg-black border border-black/10 dark:border-white/10 text-zinc-900 dark:text-white text-sm rounded-xl px-4 py-3 outline-none focus:border-emerald-500 dark:focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all duration-300 shadow-sm dark:shadow-inner" 
+                  value={newCollectionCategory}
+                  onChange={(e) => setNewCollectionCategory(e.target.value)}
+                  placeholder="e.g. Programming, Music, Gaming"
                 />
               </div>
               <div className="flex gap-3">
