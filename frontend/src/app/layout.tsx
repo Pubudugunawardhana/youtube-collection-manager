@@ -3,7 +3,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 
 export const metadata: Metadata = {
-  title: "YouTube Collection Manager",
+  title: "FocusTube",
   description: "Organize and track your YouTube learning",
 };
 
