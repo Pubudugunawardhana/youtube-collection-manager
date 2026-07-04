@@ -3,10 +3,12 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 const register = async (req, res) => {
+  console.log('HIT REGISTER', req.body);
   try {
     const { email, password } = req.body;
     let user = await User.findOne({ email });
     if (user) {
+      console.log('User already exists');
       return res.status(400).json({ message: 'User already exists' });
     }
 
@@ -19,11 +21,12 @@ const register = async (req, res) => {
     const payload = { user: { id: user.id } };
     jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '7d' }, (err, token) => {
       if (err) throw err;
+      console.log('Token created', token);
       res.status(201).json({ token });
     });
   } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server error');
+    console.error('CATCH BLOCK:', err);
+    res.status(500).json({ message: 'Server error', error: err.message, stack: err.stack });
   }
 };
 
