@@ -130,4 +130,48 @@ const getMe = async (req, res) => {
   }
 };
 
-module.exports = { register, login, forgotPassword, resetPassword, getMe };
+const updateProfile = async (req, res) => {
+  try {
+    const { name, profilePicture } = req.body;
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (name !== undefined) user.name = name;
+    if (profilePicture !== undefined) user.profilePicture = profilePicture;
+
+    await user.save();
+    res.json({ message: 'Profile updated successfully', user: { name: user.name, profilePicture: user.profilePicture } });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+};
+
+const updatePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const user = await User.findById(req.user.id);
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Incorrect current password' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+    await user.save();
+
+    res.json({ message: 'Password updated successfully' });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+};
+
+module.exports = { register, login, forgotPassword, resetPassword, getMe, updateProfile, updatePassword };

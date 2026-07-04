@@ -12,6 +12,13 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  name: {
+    type: String,
+    trim: true,
+  },
+  profilePicture: {
+    type: String, // Will store base64 Data URL
+  },
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);
