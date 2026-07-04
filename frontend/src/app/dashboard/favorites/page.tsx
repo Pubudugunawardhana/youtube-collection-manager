@@ -22,7 +22,7 @@ interface Collection {
   progress?: CollectionProgress;
 }
 
-export default function Dashboard() {
+export default function FavoritesDashboard() {
   const [collections, setCollections] = useState<Collection[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -45,7 +45,7 @@ export default function Dashboard() {
         })
       );
       
-      setCollections(collectionsWithProgress);
+      setCollections(collectionsWithProgress.filter((c: Collection) => c.isFavorite));
     } catch (err) {
       console.error(err);
     } finally {
@@ -135,12 +135,12 @@ export default function Dashboard() {
 
           <div className="flex items-center gap-4">
             <ThemeToggle />
-            <button 
-              onClick={() => setShowModal(true)} 
-              className="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-xl px-4 py-2.5 transition-all flex items-center gap-2 shadow-md hidden sm:flex"
+            <Link 
+              href="/dashboard"
+              className="bg-zinc-100 dark:bg-zinc-900 text-zinc-900 dark:text-white hover:bg-zinc-200 dark:hover:bg-zinc-800 border border-black/5 dark:border-white/5 text-sm font-semibold rounded-xl px-4 py-2.5 transition-all flex items-center gap-2 shadow-sm hidden sm:flex"
             >
-              <Plus size={16} /> New Collection
-            </button>
+              Dashboard
+            </Link>
             <UserMenu />
           </div>
         </div>
@@ -151,32 +151,32 @@ export default function Dashboard() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10">
           <div>
             <h2 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white flex items-center gap-2">
-              <LayoutGrid size={24} className="text-emerald-500" />
-              Your Collections
+              <Heart size={24} className="text-rose-500 fill-current" />
+              Your favourite Collections
             </h2>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Organize and track your YouTube tutorials</p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Quickly access the collections you love the most</p>
           </div>
-          <button 
-            onClick={() => setShowModal(true)} 
-            className="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-xl px-4 py-2.5 transition-all flex items-center justify-center gap-2 shadow-md sm:hidden w-full"
+          <Link 
+            href="/dashboard"
+            className="bg-zinc-100 dark:bg-zinc-900 text-zinc-900 dark:text-white hover:bg-zinc-200 dark:hover:bg-zinc-800 border border-black/5 dark:border-white/5 text-sm font-semibold rounded-xl px-4 py-2.5 transition-all flex items-center justify-center gap-2 shadow-sm sm:hidden w-full"
           >
-            <Plus size={16} /> New Collection
-          </button>
+            Dashboard
+          </Link>
         </div>
 
         {collections.length === 0 ? (
           <div className="w-full bg-white dark:bg-black/50 border border-black/10 dark:border-white/10 rounded-3xl p-12 shadow-xl flex flex-col items-center justify-center backdrop-blur-xl transition-colors duration-300 min-h-[400px]">
-            <div className="w-20 h-20 rounded-3xl bg-zinc-100 dark:bg-zinc-900 border border-black/5 dark:border-white/5 flex items-center justify-center mb-6 shadow-inner">
-              <Folder size={32} className="text-zinc-400 dark:text-zinc-500" />
+            <div className="w-20 h-20 rounded-3xl bg-rose-50 dark:bg-rose-500/10 border border-rose-100 dark:border-rose-500/20 flex items-center justify-center mb-6 shadow-inner">
+              <Heart size={32} className="text-rose-400 dark:text-rose-500" />
             </div>
-            <h3 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-white mb-2">No collections yet</h3>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-8 max-w-sm text-center">Create your first collection to start organizing your YouTube videos and tracking your learning progress.</p>
-            <button 
-              onClick={() => setShowModal(true)} 
+            <h3 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-white mb-2">No favourite collections</h3>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-8 max-w-sm text-center">Click the heart icon on a collection in your dashboard to add it here.</p>
+            <Link 
+              href="/dashboard"
               className="bg-zinc-900 dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-100 text-sm font-semibold rounded-xl px-6 py-3 transition-all flex items-center justify-center gap-2 shadow-md"
             >
-              <Plus size={16} /> Create First Collection
-            </button>
+              Go to Dashboard
+            </Link>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

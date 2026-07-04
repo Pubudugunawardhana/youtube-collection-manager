@@ -71,4 +71,24 @@ const deleteCollection = async (req, res) => {
   }
 };
 
-module.exports = { createCollection, getCollections, getCollectionProgress, deleteCollection };
+const updateCollection = async (req, res) => {
+  try {
+    const { name, category, isFavorite } = req.body;
+    const collection = await Collection.findOne({ _id: req.params.id, userId: req.user.id });
+    
+    if (!collection) {
+      return res.status(404).json({ message: 'Collection not found' });
+    }
+
+    if (name !== undefined) collection.name = name;
+    if (category !== undefined) collection.category = category;
+    if (isFavorite !== undefined) collection.isFavorite = isFavorite;
+
+    await collection.save();
+    res.json(collection);
+  } catch (err) {
+    res.status(500).send('Server error');
+  }
+};
+
+module.exports = { createCollection, getCollections, getCollectionProgress, deleteCollection, updateCollection };

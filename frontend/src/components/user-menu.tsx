@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { LogOut } from 'lucide-react';
+import { LogOut, Heart } from 'lucide-react';
 import api from '@/lib/axios';
 
 export function UserMenu() {
@@ -96,6 +96,17 @@ export function UserMenu() {
               className="mt-4 px-4 py-2 text-sm font-medium border border-black/10 dark:border-white/10 rounded-full text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors inline-block"
             >
               Manage your Account
+            </Link>
+          </div>
+          
+          <div className="p-2 border-b border-black/5 dark:border-white/5">
+            <Link 
+              href="/dashboard/favorites"
+              onClick={() => setIsOpen(false)}
+              className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
+            >
+              <Heart size={18} className="text-rose-500" />
+              Favourite Collections
             </Link>
           </div>
           
