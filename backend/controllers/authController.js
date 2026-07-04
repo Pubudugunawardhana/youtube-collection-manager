@@ -51,6 +51,8 @@ const login = async (req, res) => {
   }
 };
 
+const sendEmail = require('../utils/sendEmail');
+
 const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
@@ -59,12 +61,34 @@ const forgotPassword = async (req, res) => {
        return res.status(404).json({ message: 'User not found' });
     }
     
-    // In a real app, generate a reset token, save it to user model, and email it.
-    // For MVP, we will just simulate success.
     const resetToken = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '15m' });
-    console.log(`[Dev Only] Reset Token for ${email}: ${resetToken}`);
+    
+    // Create reset URL (pointing to the frontend route you will build to reset the password)
+    // Note: ensure your frontend is running on localhost:3000
+    const resetUrl = `http://localhost:3000/reset-password?token=${resetToken}`;
+    
+    const message = `You are receiving this email because you (or someone else) requested the reset of a password. Please click on the link below to reset your password:\n\n${resetUrl}`;
+    
+    const html = `
+      <h3>Password Reset Request</h3>
+      <p>You are receiving this email because you (or someone else) requested the reset of a password.</p>
+      <p>Please click on the link below to reset your password:</p>
+      <a href="${resetUrl}" target="_blank">Reset Password</a>
+    `;
 
-    res.json({ message: 'Password reset instructions sent to email (Check console for token in dev)' });
+    try {
+      await sendEmail({
+        email: user.email,
+        subject: 'FocusTube - Password Reset Token',
+        message,
+        html
+      });
+
+      res.json({ message: 'Password reset instructions sent to email!' });
+    } catch (error) {
+      console.error('Email could not be sent', error);
+      return res.status(500).json({ message: 'Email could not be sent' });
+    }
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server error');

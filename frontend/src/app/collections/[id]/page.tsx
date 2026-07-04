@@ -1,17 +1,32 @@
 "use client";
 
-import { useEffect, useState, use } from 'react';
+import { useEffect, useState, use, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import api from '@/lib/axios';
 import { ArrowLeft, Plus, Trash2, ExternalLink, Clock, Loader2, PlayCircle, CheckCircle2 } from 'lucide-react';
 
+interface Video {
+  _id: string;
+  title: string;
+  youtubeId: string;
+  thumbnail?: string;
+  duration?: string;
+  status: string;
+}
+
+interface Collection {
+  _id: string;
+  name: string;
+  category?: string;
+}
+
 export default function CollectionDetail({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const { id } = resolvedParams;
   
-  const [videos, setVideos] = useState<any[]>([]);
-  const [collection, setCollection] = useState<any>(null);
+  const [videos, setVideos] = useState<Video[]>([]);
+  const [collection, setCollection] = useState<Collection | null>(null);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newVideoUrl, setNewVideoUrl] = useState('');
@@ -19,20 +34,20 @@ export default function CollectionDetail({ params }: { params: Promise<{ id: str
   const [error, setError] = useState('');
   const router = useRouter();
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      router.push('/login');
-      return;
+  const fetchVideos = useCallback(async () => {
+    try {
+      const res = await api.get(`/videos/collection/${id}`);
+      setVideos(res.data);
+    } catch (err) {
+      console.error(err);
     }
-    fetchData();
-  }, [id, router]);
+  }, [id]);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       // Get all collections to find the current one (MVP approach)
       const colRes = await api.get('/collections');
-      const currentCol = colRes.data.find((c: any) => c._id === id);
+      const currentCol = colRes.data.find((c: Collection) => c._id === id);
       if (currentCol) {
         setCollection(currentCol);
       }
@@ -43,16 +58,19 @@ export default function CollectionDetail({ params }: { params: Promise<{ id: str
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, fetchVideos]);
 
-  const fetchVideos = async () => {
-    try {
-      const res = await api.get(`/videos/collection/${id}`);
-      setVideos(res.data);
-    } catch (err) {
-      console.error(err);
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      router.push('/login');
+      return;
     }
-  };
+    const timer = setTimeout(() => {
+      fetchData();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [id, router, fetchData]);
 
   const handleAddVideo = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,8 +86,16 @@ export default function CollectionDetail({ params }: { params: Promise<{ id: str
       
       // Refresh the page data
       await fetchData(); 
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to add video. Check URL.');
+    } catch (err) {
+      interface ApiError {
+        response?: {
+          data?: {
+            message?: string;
+          };
+        };
+      }
+      const apiError = err as ApiError;
+      setError(apiError.response?.data?.message || 'Failed to add video. Check URL.');
     } finally {
       setAdding(false);
     }
@@ -79,7 +105,7 @@ export default function CollectionDetail({ params }: { params: Promise<{ id: str
     try {
       await api.put(`/videos/${videoId}/status`, { status: newStatus });
       fetchVideos();
-    } catch (err) {
+    } catch {
       console.error('Failed to update status');
     }
   };
@@ -89,7 +115,7 @@ export default function CollectionDetail({ params }: { params: Promise<{ id: str
     try {
       await api.delete(`/videos/${videoId}`);
       fetchVideos();
-    } catch (err) {
+    } catch {
       console.error('Failed to delete video');
     }
   };
@@ -98,8 +124,8 @@ export default function CollectionDetail({ params }: { params: Promise<{ id: str
     if (!confirm('Are you sure you want to delete this entire collection?')) return;
     try {
       await api.delete(`/collections/${id}`);
-      router.push('/');
-    } catch (err) {
+      router.push('/dashboard');
+    } catch {
       console.error('Failed to delete collection');
     }
   };
@@ -120,7 +146,7 @@ export default function CollectionDetail({ params }: { params: Promise<{ id: str
   return (
     <div className="container">
       <div className="mb-6">
-        <Link href="/" className="inline-flex items-center gap-2 text-secondary hover:text-white transition-colors text-sm font-medium">
+        <Link href="/dashboard" className="inline-flex items-center gap-2 text-secondary hover:text-white transition-colors text-sm font-medium">
           <ArrowLeft size={16} /> Back to Dashboard
         </Link>
       </div>
@@ -180,6 +206,7 @@ export default function CollectionDetail({ params }: { params: Promise<{ id: str
           {videos.map(video => (
             <div key={video._id} className="glass-card overflow-hidden flex flex-col group">
               <div className="relative aspect-video bg-black">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img 
                   src={video.thumbnail || `https://i.ytimg.com/vi/${video.youtubeId}/hqdefault.jpg`} 
                   alt={video.title}
