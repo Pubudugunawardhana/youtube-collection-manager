@@ -4,7 +4,7 @@ import { useEffect, useState, use, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import api from '@/lib/axios';
-import { ArrowLeft, Plus, Trash2, Clock, Loader2, PlayCircle, CheckCircle2, PlaySquare, X } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Clock, Loader2, PlayCircle, CheckCircle2, PlaySquare, X, ChevronDown, Check } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 
 interface Video {
@@ -21,6 +21,57 @@ interface Collection {
   name: string;
   category?: string;
 }
+
+const StatusDropdown = ({ status, onChange }: { status: string, onChange: (val: string) => void }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const options = ['To Watch', 'Watching', 'Watched'];
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const close = () => setIsOpen(false);
+    window.addEventListener('click', close);
+    return () => window.removeEventListener('click', close);
+  }, [isOpen]);
+
+  const baseColor = status === 'Watched' 
+    ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20' 
+    : status === 'Watching'
+    ? 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/20'
+    : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-black/5 dark:border-white/10';
+
+  return (
+    <div className="relative" onClick={(e) => e.stopPropagation()}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className={`flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-xl border transition-all ${baseColor} hover:brightness-95 dark:hover:brightness-110`}
+      >
+        {status}
+        <ChevronDown size={14} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute left-0 bottom-full mb-2 w-36 bg-white dark:bg-zinc-900 border border-black/10 dark:border-white/10 rounded-xl shadow-xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
+          <div className="p-1.5 flex flex-col gap-0.5">
+            {options.map(opt => (
+              <button
+                key={opt}
+                onClick={() => { onChange(opt); setIsOpen(false); }}
+                className={`w-full flex items-center justify-between px-3 py-2 text-xs font-medium rounded-lg transition-colors ${
+                  status === opt 
+                    ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white' 
+                    : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-900 dark:hover:text-zinc-200'
+                }`}
+              >
+                {opt}
+                {status === opt && <Check size={14} className="text-emerald-500" />}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default function CollectionDetail({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -283,28 +334,7 @@ export default function CollectionDetail({ params }: { params: Promise<{ id: str
                   </h3>
                   
                   <div className="mt-auto flex items-center justify-between pt-4 border-t border-black/5 dark:border-white/5">
-                    <div className="relative">
-                      <select 
-                        className={`text-xs font-semibold px-4 py-2 rounded-xl appearance-none cursor-pointer border outline-none pr-8 transition-colors ${
-                          video.status === 'Watched' 
-                            ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20 hover:bg-emerald-100 dark:hover:bg-emerald-500/20' 
-                            : video.status === 'Watching'
-                            ? 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/20 hover:bg-amber-100 dark:hover:bg-amber-500/20'
-                            : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-black/5 dark:border-white/10 hover:bg-zinc-200 dark:hover:bg-zinc-700'
-                        }`}
-                        value={video.status}
-                        onChange={(e) => updateStatus(video._id, e.target.value)}
-                      >
-                        <option value="To Watch" className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white">To Watch</option>
-                        <option value="Watching" className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white">Watching</option>
-                        <option value="Watched" className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white">Watched</option>
-                      </select>
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-current opacity-50">
-                        <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      </div>
-                    </div>
+                    <StatusDropdown status={video.status} onChange={(val) => updateStatus(video._id, val)} />
                     
                     <button 
                       onClick={() => deleteVideo(video._id)}
