@@ -18,12 +18,20 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { UserMenu } from '@/components/user-menu';
 
 export default function LandingPage() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [demoStep, setDemoStep] = useState(1);
   const [isSaving, setIsSaving] = useState(false);
   const [watched, setWatched] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && localStorage.getItem('token')) {
+      setIsAuthenticated(true);
+    }
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -72,13 +80,24 @@ export default function LandingPage() {
             <span className="font-semibold text-[15px] tracking-tight text-zinc-900 dark:text-white group-hover:text-zinc-600 dark:group-hover:text-zinc-200 transition-colors">FocusTube</span>
           </Link>
           <div className="flex items-center gap-4 sm:gap-5">
-            <Link href="/login" className="hidden sm:block text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white font-medium text-sm transition-colors">
-              Log In
-            </Link>
             <ThemeToggle />
-            <Link href="/register" className="h-9 px-4 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-black text-sm font-medium flex items-center justify-center hover:scale-105 transition-transform">
-              Get Started
-            </Link>
+            {isAuthenticated ? (
+              <>
+                <Link href="/dashboard" className="hidden sm:flex h-9 px-4 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-black text-sm font-medium items-center justify-center hover:scale-105 transition-transform">
+                  Dashboard
+                </Link>
+                <UserMenu />
+              </>
+            ) : (
+              <>
+                <Link href="/login" className="hidden sm:block text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white font-medium text-sm transition-colors">
+                  Log In
+                </Link>
+                <Link href="/register" className="h-9 px-4 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-black text-sm font-medium flex items-center justify-center hover:scale-105 transition-transform">
+                  Get Started
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </nav>
@@ -105,8 +124,8 @@ export default function LandingPage() {
           
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row gap-4 mb-24 justify-center items-center w-full sm:w-auto">
-            <Link href="/register" className="h-12 px-8 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-black font-semibold flex items-center justify-center transition-transform hover:scale-105 hover:bg-zinc-800 dark:hover:bg-zinc-100 shadow-xl dark:shadow-[0_0_30px_-10px_rgba(255,255,255,0.3)] w-full sm:w-auto">
-              Start Organizing Free
+            <Link href={isAuthenticated ? "/dashboard" : "/register"} className="h-12 px-8 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-black font-semibold flex items-center justify-center transition-transform hover:scale-105 hover:bg-zinc-800 dark:hover:bg-zinc-100 shadow-xl dark:shadow-[0_0_30px_-10px_rgba(255,255,255,0.3)] w-full sm:w-auto">
+              {isAuthenticated ? "Go to Dashboard" : "Start Organizing Free"}
             </Link>
             <a href="#demo" className="h-12 px-8 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-zinc-900 dark:text-white font-medium flex items-center justify-center backdrop-blur-md transition-colors hover:bg-black/10 dark:hover:bg-white/10 w-full sm:w-auto gap-2 group">
               View Live Demo
