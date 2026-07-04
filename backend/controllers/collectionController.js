@@ -4,9 +4,10 @@ const Video = require('../models/Video');
 
 const createCollection = async (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, icon } = req.body;
     const collection = new Collection({
       name,
+      icon: icon || 'Folder',
       userId: req.user.id
     });
     await collection.save();
@@ -73,7 +74,7 @@ const deleteCollection = async (req, res) => {
 
 const updateCollection = async (req, res) => {
   try {
-    const { name, category, isFavorite } = req.body;
+    const { name, category, isFavorite, icon } = req.body;
     const collection = await Collection.findOne({ _id: req.params.id, userId: req.user.id });
     
     if (!collection) {
@@ -83,6 +84,7 @@ const updateCollection = async (req, res) => {
     if (name !== undefined) collection.name = name;
     if (category !== undefined) collection.category = category;
     if (isFavorite !== undefined) collection.isFavorite = isFavorite;
+    if (icon !== undefined) collection.icon = icon;
 
     await collection.save();
     res.json(collection);

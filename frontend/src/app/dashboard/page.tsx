@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { Folder, Plus, LogOut, Loader2, PlaySquare, ArrowRight, LayoutGrid, X, Heart } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { UserMenu } from '@/components/user-menu';
+import { IconRenderer, ICON_OPTIONS } from '@/lib/icons';
 
 interface CollectionProgress {
   percentage: number;
@@ -19,6 +20,7 @@ interface Collection {
   name: string;
   category?: string;
   isFavorite?: boolean;
+  icon?: string;
   progress?: CollectionProgress;
 }
 
@@ -27,6 +29,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [newCollectionName, setNewCollectionName] = useState('');
+  const [selectedIcon, setSelectedIcon] = useState('Folder');
   const router = useRouter();
 
   const fetchCollections = async () => {
@@ -70,9 +73,10 @@ export default function Dashboard() {
     if (!newCollectionName.trim()) return;
     
     try {
-      await api.post('/collections', { name: newCollectionName });
+      await api.post('/collections', { name: newCollectionName, icon: selectedIcon });
       setShowModal(false);
       setNewCollectionName('');
+      setSelectedIcon('Folder');
       fetchCollections();
     } catch (err) {
       console.error(err);
@@ -188,7 +192,7 @@ export default function Dashboard() {
                   
                   <div className="flex justify-between items-start mb-4">
                     <div className="w-12 h-12 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-black/5 dark:border-white/5 flex items-center justify-center mb-1 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-500/10 transition-colors">
-                      <Folder size={22} className="text-zinc-600 dark:text-zinc-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors" />
+                      <IconRenderer iconName={c.icon || 'Folder'} size={22} className="text-zinc-600 dark:text-zinc-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors" />
                     </div>
                     <button 
                       onClick={(e) => handleToggleFavorite(e, c._id, !!c.isFavorite)}
@@ -247,13 +251,29 @@ export default function Dashboard() {
             </button>
             
             <div className="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-5 border border-emerald-200 dark:border-emerald-500/20">
-              <Folder size={24} />
+              <IconRenderer iconName={selectedIcon} size={24} />
             </div>
             
             <h2 className="text-xl font-bold text-zinc-900 dark:text-white mb-2">Create Collection</h2>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">Give your new collection a descriptive name to organize your videos.</p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">Give your new collection a descriptive name and icon.</p>
             
             <form onSubmit={handleCreateCollection}>
+              <div className="space-y-1.5 mb-6">
+                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 ml-1">Icon</label>
+                <div className="grid grid-cols-6 sm:grid-cols-9 gap-2 p-2 bg-zinc-50 dark:bg-black/30 border border-black/5 dark:border-white/5 rounded-xl max-h-32 overflow-y-auto custom-scrollbar">
+                  {ICON_OPTIONS.map((iconName) => (
+                    <button
+                      key={iconName}
+                      type="button"
+                      onClick={() => setSelectedIcon(iconName)}
+                      className={`p-2 rounded-lg flex items-center justify-center transition-all ${selectedIcon === iconName ? 'bg-emerald-500 text-white shadow-md scale-110' : 'text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800'}`}
+                      title={iconName}
+                    >
+                      <IconRenderer iconName={iconName} size={18} />
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div className="space-y-1.5 mb-8">
                 <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 ml-1">Collection Name</label>
                 <input 

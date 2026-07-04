@@ -18,6 +18,10 @@ const collectionSchema = new mongoose.Schema({
   isFavorite: {
     type: Boolean,
     default: false,
+  },
+  icon: {
+    type: String,
+    default: 'Folder',
   }
 }, { timestamps: true });
 
