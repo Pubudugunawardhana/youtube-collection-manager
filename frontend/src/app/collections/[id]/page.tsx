@@ -208,10 +208,10 @@ export default function CollectionDetail({ params }: { params: Promise<{ id: str
             <Link href="/dashboard" className="w-10 h-10 rounded-xl bg-white dark:bg-zinc-900 border border-black/10 dark:border-white/10 flex items-center justify-center text-zinc-600 dark:text-zinc-400 hover:text-emerald-500 dark:hover:text-emerald-400 hover:border-emerald-200 dark:hover:border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-colors shadow-sm group">
               <ArrowLeft size={18} className="group-hover:-translate-x-0.5 transition-transform" />
             </Link>
-            <div className="hidden sm:block">
-              <h1 className="font-bold text-lg tracking-tight text-zinc-900 dark:text-white">FocusTube</h1>
-              <p className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Learning Hub</p>
-            </div>
+            <Link href="/" className="hidden sm:block group outline-none">
+              <h1 className="font-bold text-lg tracking-tight text-zinc-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">FocusTube</h1>
+              <p className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider group-hover:text-emerald-500/70 transition-colors">Learning Hub</p>
+            </Link>
           </div>
 
           <div className="flex items-center gap-4">

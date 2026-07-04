@@ -103,15 +103,15 @@ export default function Dashboard() {
       {/* Header */}
       <header className="relative z-40 border-b border-black/5 dark:border-white/5 bg-white/50 dark:bg-black/20 backdrop-blur-md sticky top-0">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-emerald-400 dark:from-emerald-600 dark:to-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+          <Link href="/" className="flex items-center gap-3 group outline-none">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-emerald-400 dark:from-emerald-600 dark:to-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/20 group-hover:scale-105 transition-transform duration-300">
               <PlaySquare size={18} className="text-white" />
             </div>
             <div>
-              <h1 className="font-bold text-lg tracking-tight text-zinc-900 dark:text-white">FocusTube</h1>
-              <p className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Learning Hub</p>
+              <h1 className="font-bold text-lg tracking-tight text-zinc-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">FocusTube</h1>
+              <p className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider group-hover:text-emerald-500/70 transition-colors">Learning Hub</p>
             </div>
-          </div>
+          </Link>
 
           <div className="flex items-center gap-4">
             <ThemeToggle />
