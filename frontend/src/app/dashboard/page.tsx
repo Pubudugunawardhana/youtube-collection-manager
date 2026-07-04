@@ -6,6 +6,7 @@ import api from '@/lib/axios';
 import Link from 'next/link';
 import { Folder, Plus, LogOut, Loader2, PlaySquare, ArrowRight, LayoutGrid, X } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { UserMenu } from '@/components/user-menu';
 
 interface CollectionProgress {
   percentage: number;
@@ -120,13 +121,7 @@ export default function Dashboard() {
             >
               <Plus size={16} /> New Collection
             </button>
-            <button 
-              onClick={handleLogout} 
-              className="w-10 h-10 rounded-xl bg-white dark:bg-zinc-900 border border-black/10 dark:border-white/10 flex items-center justify-center text-zinc-600 dark:text-zinc-400 hover:text-red-500 dark:hover:text-red-400 hover:border-red-200 dark:hover:border-red-500/30 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors shadow-sm"
-              title="Logout"
-            >
-              <LogOut size={18} />
-            </button>
+            <UserMenu />
           </div>
         </div>
       </header>

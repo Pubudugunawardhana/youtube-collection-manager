@@ -6,6 +6,7 @@ import Link from 'next/link';
 import api from '@/lib/axios';
 import { ArrowLeft, Plus, Trash2, Clock, Loader2, PlayCircle, CheckCircle2, PlaySquare, X, ChevronDown, Check } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { UserMenu } from '@/components/user-menu';
 
 interface Video {
   _id: string;
@@ -215,6 +216,7 @@ export default function CollectionDetail({ params }: { params: Promise<{ id: str
 
           <div className="flex items-center gap-4">
             <ThemeToggle />
+            <UserMenu />
           </div>
         </div>
       </header>
