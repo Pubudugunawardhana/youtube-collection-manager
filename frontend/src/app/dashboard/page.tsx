@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/axios';
 import Link from 'next/link';
-import { Folder, Plus, LogOut, Loader2, PlaySquare } from 'lucide-react';
+import { Folder, Plus, LogOut, Loader2, PlaySquare, ArrowRight, LayoutGrid, X } from 'lucide-react';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 interface CollectionProgress {
   percentage: number;
@@ -83,83 +84,160 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="animate-spin text-blue-500" size={48} />
+      <div className="min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-black transition-colors duration-300">
+        <Loader2 className="animate-spin text-emerald-500" size={48} />
       </div>
     );
   }
 
   return (
-    <div className="container">
-      <header className="flex justify-between items-center mb-10 pb-6 border-b" style={{ borderColor: 'var(--border-color)' }}>
-        <div>
-          <h1 className="page-title">My Learning Hub</h1>
-          <p className="page-subtitle mb-0">Organize and track your YouTube tutorials</p>
-        </div>
-        <div className="flex gap-4">
-          <button onClick={() => setShowModal(true)} className="btn btn-primary">
-            <Plus size={20} /> New Collection
-          </button>
-          <button onClick={handleLogout} className="btn btn-secondary" title="Logout">
-            <LogOut size={20} />
-          </button>
+    <div className="min-h-screen bg-zinc-50 dark:bg-black font-sans transition-colors duration-300 relative">
+      {/* Background Gradients */}
+      <div className="fixed inset-0 z-0 flex justify-center pointer-events-none">
+        <div className="absolute top-[-20%] w-[800px] h-[600px] bg-emerald-600/10 dark:bg-emerald-600/15 rounded-full blur-[120px] mix-blend-multiply dark:mix-blend-screen pointer-events-none transition-colors duration-300"></div>
+      </div>
+      {/* Grid Pattern */}
+      <div className="fixed inset-0 z-0 bg-[linear-gradient(to_right,#0000000a_1px,transparent_1px),linear-gradient(to_bottom,#0000000a_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none transition-colors duration-300"></div>
+
+      {/* Header */}
+      <header className="relative z-40 border-b border-black/5 dark:border-white/5 bg-white/50 dark:bg-black/20 backdrop-blur-md sticky top-0">
+        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+          <div className="flex items-center gap-3 group">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-emerald-400 dark:from-emerald-600 dark:to-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+              <PlaySquare size={18} className="text-white" />
+            </div>
+            <div>
+              <h1 className="font-bold text-lg tracking-tight text-zinc-900 dark:text-white">FocusTube</h1>
+              <p className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Learning Hub</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            <button 
+              onClick={() => setShowModal(true)} 
+              className="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-xl px-4 py-2.5 transition-all flex items-center gap-2 shadow-md hidden sm:flex"
+            >
+              <Plus size={16} /> New Collection
+            </button>
+            <button 
+              onClick={handleLogout} 
+              className="w-10 h-10 rounded-xl bg-white dark:bg-zinc-900 border border-black/10 dark:border-white/10 flex items-center justify-center text-zinc-600 dark:text-zinc-400 hover:text-red-500 dark:hover:text-red-400 hover:border-red-200 dark:hover:border-red-500/30 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors shadow-sm"
+              title="Logout"
+            >
+              <LogOut size={18} />
+            </button>
+          </div>
         </div>
       </header>
 
-      {collections.length === 0 ? (
-        <div className="glass-panel p-10 text-center flex flex-col items-center justify-center" style={{ minHeight: '300px' }}>
-          <Folder size={64} className="text-secondary mb-4 opacity-50" />
-          <h2 className="text-xl font-medium mb-2">No collections yet</h2>
-          <p className="text-secondary mb-6">Create your first collection to start organizing videos.</p>
-          <button onClick={() => setShowModal(true)} className="btn btn-primary">
-            <Plus size={20} /> Create Collection
+      {/* Main Content */}
+      <main className="relative z-10 max-w-7xl mx-auto px-6 py-10">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white flex items-center gap-2">
+              <LayoutGrid size={24} className="text-emerald-500" />
+              Your Collections
+            </h2>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Organize and track your YouTube tutorials</p>
+          </div>
+          <button 
+            onClick={() => setShowModal(true)} 
+            className="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-xl px-4 py-2.5 transition-all flex items-center justify-center gap-2 shadow-md sm:hidden w-full"
+          >
+            <Plus size={16} /> New Collection
           </button>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-          {collections.map(c => (
-            <Link href={`/collections/${c._id}`} key={c._id}>
-              <div className="glass-card p-6 h-full flex flex-col">
-                <div className="flex justify-between items-start mb-4">
-                  <h3 className="text-xl font-semibold truncate" title={c.name}>{c.name}</h3>
-                  <span className="text-xs px-2 py-1 rounded bg-blue-500/20 text-blue-300">
-                    {c.category}
-                  </span>
-                </div>
-                
-                <div className="mt-auto pt-6">
-                  <div className="flex justify-between text-sm mb-2 text-secondary">
-                    <span>Progress</span>
-                    <span>{c.progress?.percentage || 0}%</span>
-                  </div>
-                  <div className="w-full bg-black/40 rounded-full h-2 mb-2 overflow-hidden">
-                    <div 
-                      className="bg-blue-500 h-2 rounded-full transition-all duration-500" 
-                      style={{ width: `${c.progress?.percentage || 0}%`, background: 'linear-gradient(90deg, #3b82f6, #8b5cf6)' }}
-                    ></div>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-secondary mt-3">
-                    <PlaySquare size={14} />
-                    <span>{c.progress?.watchedVideos || 0} / {c.progress?.totalVideos || 0} videos watched</span>
-                  </div>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-      )}
 
-      {/* Modal */}
+        {collections.length === 0 ? (
+          <div className="w-full bg-white dark:bg-black/50 border border-black/10 dark:border-white/10 rounded-3xl p-12 shadow-xl flex flex-col items-center justify-center backdrop-blur-xl transition-colors duration-300 min-h-[400px]">
+            <div className="w-20 h-20 rounded-3xl bg-zinc-100 dark:bg-zinc-900 border border-black/5 dark:border-white/5 flex items-center justify-center mb-6 shadow-inner">
+              <Folder size={32} className="text-zinc-400 dark:text-zinc-500" />
+            </div>
+            <h3 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-white mb-2">No collections yet</h3>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-8 max-w-sm text-center">Create your first collection to start organizing your YouTube videos and tracking your learning progress.</p>
+            <button 
+              onClick={() => setShowModal(true)} 
+              className="bg-zinc-900 dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-100 text-sm font-semibold rounded-xl px-6 py-3 transition-all flex items-center justify-center gap-2 shadow-md"
+            >
+              <Plus size={16} /> Create First Collection
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {collections.map(c => (
+              <Link href={`/collections/${c._id}`} key={c._id} className="group outline-none">
+                <div className="h-full bg-white dark:bg-black/40 border border-black/10 dark:border-white/10 rounded-2xl p-6 shadow-lg hover:shadow-xl hover:-translate-y-1 hover:border-emerald-500/30 dark:hover:border-emerald-500/30 transition-all duration-300 backdrop-blur-xl flex flex-col relative overflow-hidden">
+                  {/* Subtle top highlight on hover */}
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 to-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                  
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="w-12 h-12 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-black/5 dark:border-white/5 flex items-center justify-center mb-1 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-500/10 transition-colors">
+                      <Folder size={22} className="text-zinc-600 dark:text-zinc-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors" />
+                    </div>
+                  </div>
+                  
+                  <h3 className="text-lg font-bold text-zinc-900 dark:text-white mb-1 truncate" title={c.name}>{c.name}</h3>
+                  {c.category ? (
+                    <span className="text-xs font-medium px-2.5 py-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 w-fit">
+                      {c.category}
+                    </span>
+                  ) : (
+                    <span className="text-xs font-medium px-2.5 py-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-500 w-fit">
+                      Uncategorized
+                    </span>
+                  )}
+                  
+                  <div className="mt-auto pt-8">
+                    <div className="flex justify-between items-end mb-2 text-sm font-medium">
+                      <span className="text-zinc-500 dark:text-zinc-400">Progress</span>
+                      <span className="text-zinc-900 dark:text-white text-lg">{c.progress?.percentage || 0}%</span>
+                    </div>
+                    <div className="w-full bg-zinc-100 dark:bg-zinc-800 rounded-full h-2.5 mb-3 overflow-hidden shadow-inner border border-black/5 dark:border-white/5">
+                      <div 
+                        className="h-full rounded-full transition-all duration-1000 ease-out relative overflow-hidden" 
+                        style={{ width: `${c.progress?.percentage || 0}%`, background: 'linear-gradient(90deg, #10b981, #059669)' }}
+                      >
+                        <div className="absolute inset-0 bg-white/20 w-full h-full animate-[shimmer_2s_infinite]"></div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                      <PlaySquare size={13} />
+                      <span>{c.progress?.watchedVideos || 0} of {c.progress?.totalVideos || 0} videos watched</span>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </main>
+
+      {/* Create Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="glass-panel p-6 w-full max-w-md animate-in fade-in zoom-in duration-200">
-            <h2 className="text-xl font-semibold mb-4">Create New Collection</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+          <div className="absolute inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm transition-opacity" onClick={() => setShowModal(false)}></div>
+          <div className="relative w-full max-w-md bg-white dark:bg-zinc-950 border border-black/10 dark:border-white/10 rounded-3xl p-8 shadow-2xl animate-in zoom-in-95 fade-in duration-200">
+            <button 
+              onClick={() => setShowModal(false)}
+              className="absolute top-6 right-6 w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors"
+            >
+              <X size={16} />
+            </button>
+            
+            <div className="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-5 border border-emerald-200 dark:border-emerald-500/20">
+              <Folder size={24} />
+            </div>
+            
+            <h2 className="text-xl font-bold text-zinc-900 dark:text-white mb-2">Create Collection</h2>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">Give your new collection a descriptive name to organize your videos.</p>
+            
             <form onSubmit={handleCreateCollection}>
-              <div className="form-group">
-                <label className="form-label">Collection Name</label>
+              <div className="space-y-1.5 mb-8">
+                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 ml-1">Collection Name</label>
                 <input 
                   type="text" 
-                  className="form-input" 
+                  className="w-full bg-zinc-50 dark:bg-black border border-black/10 dark:border-white/10 text-zinc-900 dark:text-white text-sm rounded-xl px-4 py-3 outline-none focus:border-emerald-500 dark:focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all duration-300 shadow-sm dark:shadow-inner" 
                   value={newCollectionName}
                   onChange={(e) => setNewCollectionName(e.target.value)}
                   placeholder="e.g. React Mastery, Finance 101"
@@ -167,12 +245,19 @@ export default function Dashboard() {
                   required
                 />
               </div>
-              <div className="flex justify-end gap-3 mt-6">
-                <button type="button" onClick={() => setShowModal(false)} className="btn btn-secondary">
+              <div className="flex gap-3">
+                <button 
+                  type="button" 
+                  onClick={() => setShowModal(false)} 
+                  className="flex-1 bg-white dark:bg-zinc-900 border border-black/10 dark:border-white/10 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-sm font-semibold rounded-xl px-4 py-3 transition-colors shadow-sm"
+                >
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary">
-                  Create
+                <button 
+                  type="submit" 
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-xl px-4 py-3 transition-all flex items-center justify-center gap-2 shadow-md"
+                >
+                  Create <ArrowRight size={16} />
                 </button>
               </div>
             </form>
