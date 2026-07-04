@@ -8,6 +8,7 @@ import { KeyRound, PlaySquare, ArrowLeft } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 
 function ResetPasswordForm() {
+  const [step, setStep] = useState(1);
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -25,37 +26,49 @@ function ResetPasswordForm() {
     setError('');
     setMessage('');
     
-    if (!email || !otp) {
-      setError('Please provide your email and the 6-digit OTP code.');
-      return;
-    }
-    
-    if (newPassword !== confirmPassword) {
-      setError('Passwords do not match.');
-      return;
-    }
-    
-    setLoading(true);
-
-    try {
-      const res = await api.post('/auth/reset-password', { email, otp, newPassword });
-      setMessage(res.data.message);
-      // Redirect to login after a short delay
-      setTimeout(() => {
-        router.push('/login');
-      }, 2000);
-    } catch (err) {
-      interface ApiError {
-        response?: {
-          data?: {
-            message?: string;
-          };
-        };
+    if (step === 1) {
+      if (!email || !otp) {
+        setError('Please provide your email and the 6-digit OTP code.');
+        return;
       }
-      const apiError = err as ApiError;
-      setError(apiError.response?.data?.message || 'Something went wrong');
-    } finally {
-      setLoading(false);
+      setLoading(true);
+      try {
+        const res = await api.post('/auth/verify-reset-otp', { email, otp });
+        setMessage(res.data.message);
+        setTimeout(() => {
+          setMessage('');
+          setStep(2);
+        }, 1000);
+      } catch (err) {
+        interface ApiError {
+          response?: { data?: { message?: string } };
+        }
+        const apiError = err as ApiError;
+        setError(apiError.response?.data?.message || 'Invalid or expired OTP');
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      if (newPassword !== confirmPassword) {
+        setError('Passwords do not match.');
+        return;
+      }
+      setLoading(true);
+      try {
+        const res = await api.post('/auth/reset-password', { email, otp, newPassword });
+        setMessage(res.data.message);
+        setTimeout(() => {
+          router.push('/login');
+        }, 2000);
+      } catch (err) {
+        interface ApiError {
+          response?: { data?: { message?: string } };
+        }
+        const apiError = err as ApiError;
+        setError(apiError.response?.data?.message || 'Something went wrong');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -65,8 +78,12 @@ function ResetPasswordForm() {
         <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-purple-100 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 mb-5 shadow-inner border border-purple-200 dark:border-purple-500/20">
           <KeyRound size={26} />
         </div>
-        <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white mb-2">Create New Password</h1>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">Enter your new password below</p>
+        <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white mb-2">
+          {step === 1 ? 'Verify Code' : 'Create New Password'}
+        </h1>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          {step === 1 ? 'Enter the 6-digit code sent to your email' : 'Enter your new password below'}
+        </p>
       </div>
 
       {error && (
@@ -82,55 +99,61 @@ function ResetPasswordForm() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 ml-1">Email Address</label>
-          <input 
-            type="email" 
-            className={`w-full bg-zinc-50 dark:bg-black border border-black/10 dark:border-white/10 text-zinc-900 dark:text-white text-sm rounded-xl px-4 py-3 outline-none focus:border-purple-500 dark:focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all duration-300 shadow-sm dark:shadow-inner ${emailParam ? 'opacity-70' : ''}`}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            readOnly={!!emailParam}
-            placeholder="you@example.com"
-          />
-        </div>
-        
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 ml-1">6-Digit Code</label>
-          <input 
-            type="text" 
-            className="w-full bg-zinc-50 dark:bg-black border border-black/10 dark:border-white/10 text-zinc-900 dark:text-white text-sm rounded-xl px-4 py-3 outline-none focus:border-purple-500 dark:focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all duration-300 shadow-sm dark:shadow-inner text-center tracking-widest text-lg font-bold" 
-            value={otp}
-            onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, ''))}
-            required
-            maxLength={6}
-            placeholder="123456"
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 ml-1">New Password</label>
-          <input 
-            type="password" 
-            className="w-full bg-zinc-50 dark:bg-black border border-black/10 dark:border-white/10 text-zinc-900 dark:text-white text-sm rounded-xl px-4 py-3 outline-none focus:border-purple-500 dark:focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all duration-300 shadow-sm dark:shadow-inner" 
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            required
-            placeholder="••••••••"
-          />
-        </div>
-        
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 ml-1">Confirm New Password</label>
-          <input 
-            type="password" 
-            className="w-full bg-zinc-50 dark:bg-black border border-black/10 dark:border-white/10 text-zinc-900 dark:text-white text-sm rounded-xl px-4 py-3 outline-none focus:border-purple-500 dark:focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all duration-300 shadow-sm dark:shadow-inner" 
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-            placeholder="••••••••"
-          />
-        </div>
+        {step === 1 ? (
+          <>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 ml-1">Email Address</label>
+              <input 
+                type="email" 
+                className={`w-full bg-zinc-50 dark:bg-black border border-black/10 dark:border-white/10 text-zinc-900 dark:text-white text-sm rounded-xl px-4 py-3 outline-none focus:border-purple-500 dark:focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all duration-300 shadow-sm dark:shadow-inner ${emailParam ? 'opacity-70' : ''}`}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                readOnly={!!emailParam}
+                placeholder="you@example.com"
+              />
+            </div>
+            
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 ml-1">6-Digit Code</label>
+              <input 
+                type="text" 
+                className="w-full bg-zinc-50 dark:bg-black border border-black/10 dark:border-white/10 text-zinc-900 dark:text-white text-sm rounded-xl px-4 py-3 outline-none focus:border-purple-500 dark:focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all duration-300 shadow-sm dark:shadow-inner text-center tracking-widest text-lg font-bold" 
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, ''))}
+                required
+                maxLength={6}
+                placeholder="123456"
+              />
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 ml-1">New Password</label>
+              <input 
+                type="password" 
+                className="w-full bg-zinc-50 dark:bg-black border border-black/10 dark:border-white/10 text-zinc-900 dark:text-white text-sm rounded-xl px-4 py-3 outline-none focus:border-purple-500 dark:focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all duration-300 shadow-sm dark:shadow-inner" 
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+                placeholder="••••••••"
+              />
+            </div>
+            
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 ml-1">Confirm New Password</label>
+              <input 
+                type="password" 
+                className="w-full bg-zinc-50 dark:bg-black border border-black/10 dark:border-white/10 text-zinc-900 dark:text-white text-sm rounded-xl px-4 py-3 outline-none focus:border-purple-500 dark:focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all duration-300 shadow-sm dark:shadow-inner" 
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                placeholder="••••••••"
+              />
+            </div>
+          </>
+        )}
         
         <div className="pt-4">
           <button 
@@ -141,10 +164,10 @@ function ResetPasswordForm() {
             {loading ? (
               <>
                 <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-                <span>Resetting...</span>
+                <span>{step === 1 ? 'Verifying...' : 'Resetting...'}</span>
               </>
             ) : (
-              'Reset Password'
+              step === 1 ? 'Verify Code' : 'Reset Password'
             )}
           </button>
         </div>
