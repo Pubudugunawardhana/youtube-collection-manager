@@ -31,6 +31,7 @@ export default function Dashboard() {
   const [newCollectionName, setNewCollectionName] = useState('');
   const [newCollectionCategory, setNewCollectionCategory] = useState('');
   const [selectedIcon, setSelectedIcon] = useState('Folder');
+  const [isCreating, setIsCreating] = useState(false);
   const router = useRouter();
 
   const fetchCollections = async () => {
@@ -71,8 +72,9 @@ export default function Dashboard() {
 
   const handleCreateCollection = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newCollectionName.trim()) return;
+    if (!newCollectionName.trim() || isCreating) return;
     
+    setIsCreating(true);
     try {
       await api.post('/collections', { 
         name: newCollectionName, 
@@ -86,6 +88,8 @@ export default function Dashboard() {
       fetchCollections();
     } catch (err) {
       console.error(err);
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -303,15 +307,21 @@ export default function Dashboard() {
                 <button 
                   type="button" 
                   onClick={() => setShowModal(false)} 
-                  className="flex-1 bg-white dark:bg-zinc-900 border border-black/10 dark:border-white/10 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-sm font-semibold rounded-xl px-4 py-3 transition-colors shadow-sm"
+                  disabled={isCreating}
+                  className="flex-1 bg-white dark:bg-zinc-900 border border-black/10 dark:border-white/10 hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-50 text-zinc-700 dark:text-zinc-300 text-sm font-semibold rounded-xl px-4 py-3 transition-colors shadow-sm"
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit" 
-                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-xl px-4 py-3 transition-all flex items-center justify-center gap-2 shadow-md"
+                  disabled={isCreating}
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-70 text-white text-sm font-semibold rounded-xl px-4 py-3 transition-all flex items-center justify-center gap-2 shadow-md"
                 >
-                  Create <ArrowRight size={16} />
+                  {isCreating ? (
+                    <><Loader2 size={16} className="animate-spin" /> Creating...</>
+                  ) : (
+                    <>Create <ArrowRight size={16} /></>
+                  )}
                 </button>
               </div>
             </form>
