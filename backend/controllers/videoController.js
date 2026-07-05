@@ -47,7 +47,7 @@ const addVideo = async (req, res) => {
 const getVideos = async (req, res) => {
   try {
     const { collectionId } = req.params;
-    const videos = await Video.find({ collectionId, userId: req.user.id }).sort({ createdAt: -1 });
+    const videos = await Video.find({ collectionId, userId: req.user.id }).sort({ order: 1, createdAt: -1 });
     res.json(videos);
   } catch (err) {
     res.status(500).send('Server error');
@@ -79,4 +79,46 @@ const deleteVideo = async (req, res) => {
   }
 };
 
-module.exports = { addVideo, getVideos, updateVideoStatus, deleteVideo };
+const reorderVideos = async (req, res) => {
+  try {
+    const { orderedIds } = req.body;
+    
+    if (!orderedIds || !Array.isArray(orderedIds)) {
+      return res.status(400).json({ message: 'Invalid payload' });
+    }
+
+    const bulkOps = orderedIds.map((id, index) => ({
+      updateOne: {
+        filter: { _id: id, userId: req.user.id },
+        update: { order: index }
+      }
+    }));
+
+    if (bulkOps.length > 0) {
+      await Video.bulkWrite(bulkOps);
+    }
+
+    res.json({ message: 'Videos reordered successfully' });
+  } catch (err) {
+    console.error('Error reordering videos:', err);
+    res.status(500).send('Server error');
+  }
+};
+
+const updateVideoNotes = async (req, res) => {
+  try {
+    const { notes } = req.body;
+    const video = await Video.findOneAndUpdate(
+      { _id: req.params.id, userId: req.user.id },
+      { notes },
+      { new: true }
+    );
+    if (!video) return res.status(404).json({ message: 'Video not found' });
+    res.json(video);
+  } catch (err) {
+    console.error('Error updating video notes:', err);
+    res.status(500).send('Server error');
+  }
+};
+
+module.exports = { addVideo, getVideos, updateVideoStatus, deleteVideo, reorderVideos, updateVideoNotes };
