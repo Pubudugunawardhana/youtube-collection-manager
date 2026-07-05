@@ -214,4 +214,30 @@ const updatePassword = async (req, res) => {
   }
 };
 
-module.exports = { register, login, forgotPassword, verifyResetOtp, resetPassword, getMe, updateProfile, updatePassword };
+const deleteProfile = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const Collection = require('../models/Collection');
+    const Video = require('../models/Video');
+
+    // Find all collections for the user
+    const collections = await Collection.find({ user: userId });
+    const collectionIds = collections.map(c => c._id);
+
+    // Delete all videos associated with those collections
+    await Video.deleteMany({ collectionId: { $in: collectionIds } });
+
+    // Delete all collections
+    await Collection.deleteMany({ user: userId });
+
+    // Delete the user
+    await User.findByIdAndDelete(userId);
+
+    res.json({ message: 'User profile and all associated data deleted successfully' });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+};
+
+module.exports = { register, login, forgotPassword, verifyResetOtp, resetPassword, getMe, updateProfile, updatePassword, deleteProfile };
