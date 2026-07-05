@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/play-square.svg" alt="FocusTube Logo" width="80" height="80">
+  
   <h1 align="center">FocusTube</h1>
   <p align="center">
     <strong>A distraction-free, highly organized way to manage and learn from YouTube videos.</strong>
