@@ -67,7 +67,7 @@ export default function ForgotPassword() {
             <KeyRound size={26} />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white mb-2">Reset Password</h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">Enter your email to receive a reset link</p>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">Enter your email to receive a 6-digit code</p>
         </div>
 
         {error && (
@@ -107,7 +107,7 @@ export default function ForgotPassword() {
                   <span>Sending...</span>
                 </>
               ) : (
-                'Send Reset Link'
+                'Send Code'
               )}
             </button>
           </div>

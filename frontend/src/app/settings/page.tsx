@@ -98,8 +98,12 @@ export default function SettingsPage() {
       // Trigger a re-render or custom event if needed so UserMenu updates, 
       // but easiest way for now is just show success message. UserMenu will update on next load.
       // We could also dispatch an event, but let's keep it simple.
-    } catch (err: any) {
-      setProfileMsg({ text: err.response?.data?.message || 'Failed to update profile', type: 'error' });
+    } catch (err) {
+      interface ApiError {
+        response?: { data?: { message?: string } };
+      }
+      const apiError = err as ApiError;
+      setProfileMsg({ text: apiError.response?.data?.message || 'Failed to update profile', type: 'error' });
     } finally {
       setSavingProfile(false);
     }
@@ -122,8 +126,12 @@ export default function SettingsPage() {
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-    } catch (err: any) {
-      setPasswordMsg({ text: err.response?.data?.message || 'Failed to update password', type: 'error' });
+    } catch (err) {
+      interface ApiError {
+        response?: { data?: { message?: string } };
+      }
+      const apiError = err as ApiError;
+      setPasswordMsg({ text: apiError.response?.data?.message || 'Failed to update password', type: 'error' });
     } finally {
       setSavingPassword(false);
     }
@@ -198,6 +206,7 @@ export default function SettingsPage() {
                   <div className="flex flex-col items-center gap-4">
                     <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
                       {profilePicture ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
                         <img src={profilePicture} alt="Profile" className="w-32 h-32 rounded-full object-cover border-4 border-white dark:border-zinc-800 shadow-lg" />
                       ) : (
                         <div className="w-32 h-32 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-5xl shadow-lg border-4 border-white dark:border-zinc-800">
