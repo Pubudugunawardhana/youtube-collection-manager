@@ -1,13 +1,19 @@
 "use client";
 
-import { useEffect, useState, use, useCallback } from 'react';
+import { useEffect, useState, use, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import api from '@/lib/axios';
-import { ArrowLeft, Plus, Trash2, Clock, Loader2, PlayCircle, CheckCircle2, PlaySquare, X, ChevronDown, Check, Heart } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Loader2, PlayCircle, CheckCircle2, PlaySquare, X, ChevronDown, Check, Heart, List, Search, FileText } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { UserMenu } from '@/components/user-menu';
 import { IconRenderer } from '@/lib/icons';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { SortableVideoCard } from '@/components/SortableVideoCard';
+import { SortableListItem } from '@/components/SortableListItem';
+import { SmartNotepad } from '@/components/SmartNotepad';
+import YouTube from 'react-youtube';
 
 interface Video {
   _id: string;
@@ -16,6 +22,7 @@ interface Video {
   thumbnail?: string;
   duration?: string;
   status: string;
+  notes?: string;
 }
 
 interface Collection {
@@ -90,6 +97,11 @@ export default function CollectionDetail({ params }: { params: Promise<{ id: str
   const [error, setError] = useState('');
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; type: 'collection' | 'video'; targetId?: string; title: string }>({ isOpen: false, type: 'collection', title: '' });
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
+  const [showListModal, setShowListModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showNotepad, setShowNotepad] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const playerRef = useRef<any>(null);
   const router = useRouter();
 
   const fetchVideos = useCallback(async () => {
@@ -203,6 +215,37 @@ export default function CollectionDetail({ params }: { params: Promise<{ id: str
     }
   };
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = videos.findIndex((v) => v._id === active.id);
+      const newIndex = videos.findIndex((v) => v._id === over.id);
+
+      const newOrderedVideos = arrayMove(videos, oldIndex, newIndex);
+      setVideos(newOrderedVideos);
+
+      try {
+        await api.put('/videos/reorder', {
+          orderedIds: newOrderedVideos.map(v => v._id)
+        });
+      } catch (err) {
+        console.error('Failed to save reorder', err);
+      }
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-black transition-colors duration-300">
@@ -277,6 +320,14 @@ export default function CollectionDetail({ params }: { params: Promise<{ id: str
             
             <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto mt-2 md:mt-0">
               <button 
+                onClick={() => setShowListModal(true)}
+                className="flex items-center justify-center gap-2 text-sm font-semibold rounded-xl px-5 py-3 transition-all shadow-sm flex-1 sm:flex-none border bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border-black/10 dark:border-white/10 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 hover:border-emerald-200 dark:hover:border-emerald-500/30"
+                title="View and Search Video List"
+              >
+                <List size={16} />
+                <span className="sm:hidden md:inline">List View</span>
+              </button>
+              <button 
                 onClick={handleToggleFavorite}
                 className={`flex items-center justify-center gap-2 text-sm font-semibold rounded-xl px-5 py-3 transition-all shadow-sm flex-1 sm:flex-none border ${collection?.isFavorite ? 'bg-rose-50 dark:bg-rose-500/10 text-rose-500 border-rose-200 dark:border-rose-500/30 hover:bg-rose-100 dark:hover:bg-rose-500/20' : 'bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border-black/10 dark:border-white/10 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:border-rose-200 dark:hover:border-rose-500/30'}`}
                 title={collection?.isFavorite ? "Remove from Favorites" : "Add to Favorites"}
@@ -333,57 +384,30 @@ export default function CollectionDetail({ params }: { params: Promise<{ id: str
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {videos.map(video => (
-              <div key={video._id} className="group bg-white dark:bg-black/40 border border-black/10 dark:border-white/10 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl hover:-translate-y-1 hover:border-emerald-500/30 dark:hover:border-emerald-500/30 transition-all duration-300 backdrop-blur-xl flex flex-col">
-                <div className="relative aspect-video bg-zinc-100 dark:bg-zinc-900 border-b border-black/5 dark:border-white/5 overflow-hidden">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img 
-                    src={video.thumbnail || `https://i.ytimg.com/vi/${video.youtubeId}/maxresdefault.jpg`} 
-                    alt={video.title}
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = `https://i.ytimg.com/vi/${video.youtubeId}/hqdefault.jpg`;
-                    }}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          <DndContext 
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext 
+              items={videos.map(v => v._id)}
+              strategy={rectSortingStrategy}
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {videos.map(video => (
+                  <SortableVideoCard 
+                    key={video._id} 
+                    video={video} 
+                    onPlay={setPlayingVideoId}
+                    onDelete={confirmDeleteVideo}
+                    statusDropdown={
+                      <StatusDropdown status={video.status} onChange={(val) => updateStatus(video._id, val)} />
+                    }
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  
-                  {video.duration && video.duration !== '00:00' && (
-                    <div className="absolute bottom-3 right-3 bg-black/80 backdrop-blur-md text-white text-xs px-2.5 py-1 rounded-md font-medium flex items-center gap-1.5 shadow-lg border border-white/10">
-                      <Clock size={12} /> {video.duration}
-                    </div>
-                  )}
-                  
-                  <button 
-                    onClick={() => setPlayingVideoId(video.youtubeId)}
-                    className="absolute inset-0 flex items-center justify-center w-full h-full opacity-0 group-hover:opacity-100 transition-all duration-300 z-10 cursor-pointer"
-                  >
-                    <div className="bg-emerald-600/90 backdrop-blur-md rounded-full p-4 shadow-2xl transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 hover:bg-emerald-500 hover:scale-110">
-                      <PlayCircle size={28} className="text-white fill-white/20" />
-                    </div>
-                  </button>
-                </div>
-                
-                <div className="p-5 flex flex-col flex-1">
-                  <h3 className="font-bold text-zinc-900 dark:text-white text-[15px] mb-4 line-clamp-2 leading-snug group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors" title={video.title}>
-                    {video.title}
-                  </h3>
-                  
-                  <div className="mt-auto flex items-center justify-between pt-4 border-t border-black/5 dark:border-white/5">
-                    <StatusDropdown status={video.status} onChange={(val) => updateStatus(video._id, val)} />
-                    
-                    <button 
-                      onClick={() => confirmDeleteVideo(video._id)}
-                      className="w-9 h-9 rounded-xl flex items-center justify-center text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 hover:border-red-200 dark:hover:border-red-500/30 border border-transparent transition-all"
-                      title="Remove video"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </SortableContext>
+          </DndContext>
         )}
       </main>
 
@@ -495,26 +519,131 @@ export default function CollectionDetail({ params }: { params: Promise<{ id: str
             className="absolute inset-0 bg-black/90 backdrop-blur-md" 
             onClick={() => setPlayingVideoId(null)}
           ></div>
-          <div className="relative w-full max-w-6xl aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/10 zoom-in-95 animate-in duration-300">
+          <div className="relative w-full h-full max-h-[90vh] bg-black rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/10 zoom-in-95 animate-in duration-300">
             <button 
               onClick={() => setPlayingVideoId(null)}
-              className="absolute -top-12 right-0 sm:top-6 sm:right-6 w-10 h-10 rounded-full bg-black/50 hover:bg-black/80 flex items-center justify-center text-white/70 hover:text-white transition-colors z-10 backdrop-blur-sm"
+              className="absolute -top-12 right-0 sm:top-6 sm:right-6 w-10 h-10 rounded-full bg-black/50 hover:bg-black/80 flex items-center justify-center text-white/70 hover:text-white transition-colors z-[110] backdrop-blur-sm"
             >
               <X size={24} />
             </button>
-            <iframe
-              width="100%"
-              height="100%"
-              src={`https://www.youtube.com/embed/${playingVideoId}?autoplay=1`}
-              title="YouTube video player"
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              className="w-full h-full"
-            ></iframe>
+
+            {/* Main Video Area */}
+            <div className="w-full h-full relative bg-black flex items-center justify-center min-h-[300px]">
+              <YouTube
+                videoId={playingVideoId}
+                opts={{
+                  width: '100%',
+                  height: '100%',
+                  playerVars: { autoplay: 1 }
+                }}
+                className="absolute inset-0 w-full h-full [&>iframe]:w-full [&>iframe]:h-full"
+                onReady={(event) => {
+                  playerRef.current = event.target;
+                }}
+              />
+            </div>
+
+            {/* Smart Notepad Sidebar */}
+            {showNotepad && (
+              <div className="absolute top-4 right-4 bottom-4 w-80 md:w-[350px] z-[120] shadow-2xl overflow-hidden rounded-2xl border border-black/10 dark:border-white/10 bg-white dark:bg-zinc-900 animate-in slide-in-from-right duration-300">
+                <SmartNotepad
+                  videoId={videos.find(v => v.youtubeId === playingVideoId)?._id || ''}
+                  initialNotes={videos.find(v => v.youtubeId === playingVideoId)?.notes || ''}
+                  onSeek={(seconds) => {
+                    if (playerRef.current) {
+                      playerRef.current.seekTo(seconds);
+                    }
+                  }}
+                  onClose={() => setShowNotepad(false)}
+                  onSave={(vidId, newNotes) => {
+                    setVideos(prev => prev.map(v => v._id === vidId ? { ...v, notes: newNotes } : v));
+                  }}
+                  getCurrentTime={async () => {
+                    if (playerRef.current && playerRef.current.getCurrentTime) {
+                      return await playerRef.current.getCurrentTime();
+                    }
+                    return 0;
+                  }}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Open Smart Notes Button (Fixed at bottom right of screen) */}
+          {!showNotepad && (
+            <button
+              onClick={() => setShowNotepad(true)}
+              className="absolute bottom-10 right-6 md:bottom-[56px] md:right-12 z-[120] bg-emerald-600/90 hover:bg-emerald-500 text-white px-4 py-2.5 rounded-xl shadow-2xl backdrop-blur-md transition-all hover:scale-105 flex items-center gap-2.5 border border-emerald-400/30 group"
+            >
+              <FileText size={18} className="group-hover:animate-pulse" />
+              <span className="font-bold text-sm tracking-wide">
+                Smart Notes
+              </span>
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* List View Modal */}
+      {showListModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setShowListModal(false)}>
+          <div className="bg-white dark:bg-zinc-950 rounded-3xl p-6 w-full max-w-2xl shadow-2xl border border-black/10 dark:border-white/10 relative max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+            <button 
+              onClick={() => setShowListModal(false)}
+              className="absolute top-4 right-4 p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 transition-colors"
+            >
+              <X size={20} />
+            </button>
+            
+            <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-4 pr-10">All Videos in {collection?.name}</h3>
+            
+            <div className="relative mb-6 flex-shrink-0">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
+              <input 
+                type="text"
+                placeholder="Search videos by title..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-zinc-50 dark:bg-zinc-900 border border-black/10 dark:border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all text-zinc-900 dark:text-white placeholder:text-zinc-500"
+              />
+            </div>
+            
+            <DndContext 
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext 
+                items={videos.filter(v => v.title.toLowerCase().includes(searchQuery.toLowerCase())).map(v => v._id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="overflow-y-auto space-y-2 pr-2 custom-scrollbar flex-1 min-h-0">
+                  {videos.filter(v => v.title.toLowerCase().includes(searchQuery.toLowerCase())).map(video => (
+                    <SortableListItem
+                      key={video._id}
+                      video={video}
+                      onPlay={(id) => {
+                        setPlayingVideoId(id);
+                        setShowListModal(false);
+                      }}
+                      disabled={searchQuery.trim().length > 0}
+                    />
+                  ))}
+                  {videos.filter(v => v.title.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 && (
+                    <div className="text-center py-10">
+                      <div className="w-12 h-12 rounded-2xl bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center mx-auto mb-3">
+                        <Search className="text-zinc-400" size={20} />
+                      </div>
+                      <p className="text-zinc-500 text-sm font-medium">No videos found matching &quot;{searchQuery}&quot;</p>
+                    </div>
+                  )}
+                </div>
+              </SortableContext>
+            </DndContext>
           </div>
         </div>
       )}
+
     </div>
   );
 }
