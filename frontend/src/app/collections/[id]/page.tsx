@@ -522,7 +522,7 @@ export default function CollectionDetail({ params }: { params: Promise<{ id: str
           <div className="relative w-full h-full max-h-[90vh] bg-black rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/10 zoom-in-95 animate-in duration-300">
             <button 
               onClick={() => setPlayingVideoId(null)}
-              className="absolute -top-12 right-0 sm:top-6 sm:right-6 w-10 h-10 rounded-full bg-black/50 hover:bg-black/80 flex items-center justify-center text-white/70 hover:text-white transition-colors z-[110] backdrop-blur-sm"
+              className="absolute -top-12 right-0 sm:top-16 sm:right-6 w-10 h-10 rounded-full bg-black/50 hover:bg-black/80 flex items-center justify-center text-white/70 hover:text-white transition-colors z-[110] backdrop-blur-sm"
             >
               <X size={24} />
             </button>
