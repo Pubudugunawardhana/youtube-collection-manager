@@ -15,6 +15,14 @@ const collectionSchema = new mongoose.Schema({
     type: String,
     default: 'General',
   },
+  isFavorite: {
+    type: Boolean,
+    default: false,
+  },
+  icon: {
+    type: String,
+    default: 'Folder',
+  }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Collection', collectionSchema);

@@ -4,9 +4,11 @@ const Video = require('../models/Video');
 
 const createCollection = async (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, icon, category } = req.body;
     const collection = new Collection({
       name,
+      icon: icon || 'Folder',
+      category: category || 'General',
       userId: req.user.id
     });
     await collection.save();
@@ -71,4 +73,25 @@ const deleteCollection = async (req, res) => {
   }
 };
 
-module.exports = { createCollection, getCollections, getCollectionProgress, deleteCollection };
+const updateCollection = async (req, res) => {
+  try {
+    const { name, category, isFavorite, icon } = req.body;
+    const collection = await Collection.findOne({ _id: req.params.id, userId: req.user.id });
+    
+    if (!collection) {
+      return res.status(404).json({ message: 'Collection not found' });
+    }
+
+    if (name !== undefined) collection.name = name;
+    if (category !== undefined) collection.category = category;
+    if (isFavorite !== undefined) collection.isFavorite = isFavorite;
+    if (icon !== undefined) collection.icon = icon;
+
+    await collection.save();
+    res.json(collection);
+  } catch (err) {
+    res.status(500).send('Server error');
+  }
+};
+
+module.exports = { createCollection, getCollections, getCollectionProgress, deleteCollection, updateCollection };

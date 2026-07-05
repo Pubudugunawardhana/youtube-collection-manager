@@ -31,6 +31,14 @@ const videoSchema = new mongoose.Schema({
     enum: ['To Watch', 'Watching', 'Watched'],
     default: 'To Watch',
   },
+  order: {
+    type: Number,
+    default: 0,
+  },
+  notes: {
+    type: String,
+    default: ''
+  }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Video', videoSchema);
