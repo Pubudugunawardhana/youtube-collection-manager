@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { UserMenu } from '@/components/user-menu';
-import { ArrowLeft, PlaySquare, Camera, Loader2, Save, KeyRound, CheckCircle2, User } from 'lucide-react';
+import { ArrowLeft, PlaySquare, Camera, Loader2, Save, KeyRound, CheckCircle2, User, AlertTriangle, Eye, EyeOff } from 'lucide-react';
 import api from '@/lib/axios';
 
 export default function SettingsPage() {
@@ -23,6 +23,9 @@ export default function SettingsPage() {
 
   const [profileMsg, setProfileMsg] = useState({ text: '', type: '' });
   const [passwordMsg, setPasswordMsg] = useState({ text: '', type: '' });
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingProfile, setDeletingProfile] = useState(false);
+  const [showPassword, setShowPassword] = useState({ current: false, new: false, confirm: false });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
@@ -134,6 +137,19 @@ export default function SettingsPage() {
       setPasswordMsg({ text: apiError.response?.data?.message || 'Failed to update password', type: 'error' });
     } finally {
       setSavingPassword(false);
+    }
+  };
+
+  const handleDeleteProfile = async () => {
+    setDeletingProfile(true);
+    try {
+      await api.delete('/auth/profile');
+      localStorage.removeItem('token');
+      router.push('/login');
+    } catch (err) {
+      console.error('Failed to delete profile', err);
+      setDeletingProfile(false);
+      setShowDeleteModal(false);
     }
   };
 
@@ -269,44 +285,73 @@ export default function SettingsPage() {
             
             {/* Security Section */}
             <div className="bg-white dark:bg-black/50 border border-black/10 dark:border-white/10 rounded-3xl p-8 shadow-xl backdrop-blur-xl transition-colors duration-300 relative overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 to-emerald-400 opacity-50"></div>
+              
               <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-6 flex items-center gap-2">
                 <KeyRound className="text-zinc-400" size={20} />
                 Security
               </h3>
               
               <form onSubmit={handlePasswordSubmit} className="space-y-5">
-                <div className="space-y-1.5">
+                <div className="space-y-1.5 relative">
                   <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 ml-1">Current Password</label>
-                  <input 
-                    type="password" 
-                    value={currentPassword}
-                    onChange={(e) => setCurrentPassword(e.target.value)}
-                    required
-                    className="w-full bg-zinc-50 dark:bg-black border border-black/10 dark:border-white/10 text-zinc-900 dark:text-white text-sm rounded-xl px-4 py-3 outline-none focus:border-emerald-500 dark:focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all duration-300 shadow-sm" 
-                  />
+                  <div className="relative">
+                    <input 
+                      type={showPassword.current ? 'text' : 'password'} 
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      required
+                      className="w-full bg-zinc-50 dark:bg-black border border-black/10 dark:border-white/10 text-zinc-900 dark:text-white text-sm rounded-xl px-4 py-3 outline-none focus:border-emerald-500 dark:focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all duration-300 shadow-sm pr-11" 
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword({ ...showPassword, current: !showPassword.current })}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-emerald-500 transition-colors"
+                    >
+                      {showPassword.current ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div className="space-y-1.5">
+                  <div className="space-y-1.5 relative">
                     <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 ml-1">New Password</label>
-                    <input 
-                      type="password" 
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      required
-                      minLength={6}
-                      className="w-full bg-zinc-50 dark:bg-black border border-black/10 dark:border-white/10 text-zinc-900 dark:text-white text-sm rounded-xl px-4 py-3 outline-none focus:border-emerald-500 dark:focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all duration-300 shadow-sm" 
-                    />
+                    <div className="relative">
+                      <input 
+                        type={showPassword.new ? 'text' : 'password'} 
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        required
+                        minLength={6}
+                        className="w-full bg-zinc-50 dark:bg-black border border-black/10 dark:border-white/10 text-zinc-900 dark:text-white text-sm rounded-xl px-4 py-3 outline-none focus:border-emerald-500 dark:focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all duration-300 shadow-sm pr-11" 
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword({ ...showPassword, new: !showPassword.new })}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-emerald-500 transition-colors"
+                      >
+                        {showPassword.new ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
                   </div>
-                  <div className="space-y-1.5">
+                  <div className="space-y-1.5 relative">
                     <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 ml-1">Confirm New Password</label>
-                    <input 
-                      type="password" 
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      required
-                      minLength={6}
-                      className="w-full bg-zinc-50 dark:bg-black border border-black/10 dark:border-white/10 text-zinc-900 dark:text-white text-sm rounded-xl px-4 py-3 outline-none focus:border-emerald-500 dark:focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all duration-300 shadow-sm" 
-                    />
+                    <div className="relative">
+                      <input 
+                        type={showPassword.confirm ? 'text' : 'password'} 
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        required
+                        minLength={6}
+                        className="w-full bg-zinc-50 dark:bg-black border border-black/10 dark:border-white/10 text-zinc-900 dark:text-white text-sm rounded-xl px-4 py-3 outline-none focus:border-emerald-500 dark:focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all duration-300 shadow-sm pr-11" 
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword({ ...showPassword, confirm: !showPassword.confirm })}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-emerald-500 transition-colors"
+                      >
+                        {showPassword.confirm ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -329,6 +374,26 @@ export default function SettingsPage() {
                 </div>
               </form>
             </div>
+
+            {/* Danger Zone Section */}
+            <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-3xl p-8 shadow-xl backdrop-blur-xl transition-colors duration-300 relative overflow-hidden mt-8">
+              <h3 className="text-xl font-bold text-red-700 dark:text-red-400 mb-2 flex items-center gap-2">
+                <AlertTriangle size={20} />
+                Danger Zone
+              </h3>
+              <p className="text-sm text-red-600/80 dark:text-red-400/80 mb-6">
+                Once you delete your account, there is no going back. Please be certain.
+              </p>
+              
+              <div className="flex">
+                <button 
+                  onClick={() => setShowDeleteModal(true)}
+                  className="bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-xl px-6 py-3 transition-all flex items-center justify-center gap-2 shadow-md"
+                >
+                  Delete Profile
+                </button>
+              </div>
+            </div>
           </div>
           
           {/* Info Sidebar */}
@@ -347,6 +412,38 @@ export default function SettingsPage() {
           </div>
         </div>
       </main>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-zinc-950 border border-black/10 dark:border-white/10 rounded-3xl p-8 shadow-2xl max-w-md w-full relative overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-red-500"></div>
+            
+            <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-2">Delete Profile?</h3>
+            <p className="text-zinc-600 dark:text-zinc-400 mb-6 text-sm">
+              Are you sure you want to delete your profile? This action will permanently remove your account, all your collections, and saved videos. This cannot be undone.
+            </p>
+            
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setShowDeleteModal(false)}
+                disabled={deletingProfile}
+                className="flex-1 bg-zinc-100 dark:bg-zinc-900 text-zinc-900 dark:text-white hover:bg-zinc-200 dark:hover:bg-zinc-800 text-sm font-semibold rounded-xl px-4 py-3 transition-all disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleDeleteProfile}
+                disabled={deletingProfile}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-xl px-4 py-3 transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-70 disabled:cursor-wait"
+              >
+                {deletingProfile && <Loader2 size={16} className="animate-spin" />}
+                Yes, Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
