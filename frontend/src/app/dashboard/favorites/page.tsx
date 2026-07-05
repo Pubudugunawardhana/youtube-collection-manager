@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/axios';
 import Link from 'next/link';
-import { Folder, Plus, LogOut, Loader2, PlaySquare, ArrowRight, LayoutGrid, X, Heart } from 'lucide-react';
+import { Loader2, PlaySquare, ArrowRight, X, Heart } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { UserMenu } from '@/components/user-menu';
 import { IconRenderer, ICON_OPTIONS } from '@/lib/icons';
@@ -108,10 +108,7 @@ export default function FavoritesDashboard() {
       ));
     }
   };
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    router.push('/login');
-  };
+
 
   if (loading) {
     return (
